@@ -11,7 +11,7 @@ CC=gcc
 # Set up the LIBS if required for your system
 #
 # These flags for doing debugging
-CFLAGS= -Wall -g -DEMU211 -DEMUV1 -DNATIVES -DRUN_V1_RAW \
+CFLAGS= -fcommon -Wall -g -DEMU211 -DEMUV1 -DNATIVES -DRUN_V1_RAW \
 	-DDEBUG -DZERO_MEMORY -DWRITEBASE
 LDFLAGS= -g
 
