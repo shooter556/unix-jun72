@@ -20,7 +20,9 @@ Unless otherwise noted, file and directory names refer to this repository.
    kernel. It will create kernel sources with some necessary patches, assemble
    the kernel and build a bootable Simh memory image which is installed into
    the images directory.  Finally, the make will build the rf0.dsk, rk0.dsk
-   and tape images and install these in the images directory. You can also do
+   and tape images and install these in the images directory. It also builds
+   a cold kernel and the init DECtape images/inittape used by "Installing from
+   the init tape" below (build/Makefile target "inittape"). You can also do
    a "make clean" to clean out the images/ and build/ directories. A "make
    clobber" will clean out the images/, build/  and tools/ directories.
 
@@ -60,6 +62,28 @@ Running 1st Edition UNIX
 6. To shut the system down, enter ctrl-E to stop the simulator, and q to quit.
    You do not need to sync the system before shutdown.
 
+Installing from the init tape
+-----------------------------
+
+Instead of using the prebuilt rf0.dsk, you can let the cold kernel install a
+fresh system from images/inittape, as the original maki/init tape did.
+"make" builds the tape (or "make -C build inittape" to build only the tape).
+tools/mkinittape.py does the work: block 0 is vcboot, blocks 1-64 are the top
+of the RF disk (bos, warm kernel, cold kernel), and the rest are the root
+files in maki format.
+
+1. Run "pdp11 install.ini". It attaches a blank images/rf0-new.dsk (SIMH
+   creates it), mounts images/inittape on tc0 and the existing images/rk0.dsk
+   (/usr) on rk0, sets SR=1 and boots the tape, so bos loads the cold kernel.
+   The cold init then builds the root filesystem on rf0 from the tape.
+   The RF must have 2 platters: vcboot's last write ends exactly at the end of
+   platter 1, which SIMH reports as a nonexistent disk on a 1-platter RF.
+
+2. When the install finishes and the simulator halts, quit it (ctrl-E, q).
+   images/rf0-new.dsk is now a bootable root disk: attach it as rf0 in
+   simh.cfg instead of images/rf0.dsk and boot as in "Running 1st Edition
+   UNIX".
+
 Documentation
 -------------
 
@@ -92,7 +116,7 @@ rebuilt/	- kernel source rebuilt from the OCR'd pages, as asm files
 patches/	- patches to rebuilt/ files to get kernel to run
 fs/		- userland binaries and files, used to make rf0.dsk and rk0.dsk
 src/		- source code for userland: there is not much available
-tools/		- tools and scripts to build the kernel and filesystem
+tools/		- tools and scripts to build the kernel, filesystem and init tape
 build/		- build area: patched kernel files, patched filesystems
 images/		- final disk and tape images to be used by the Simh simulator
 misc/		- misc. files, e.g. the Simh patch for KE11A support

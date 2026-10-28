@@ -5,6 +5,7 @@
 #	all		- make kernel and disk images
 #	images		- make disk images
 #	tape		- make a tape image for a "cold" kernel
+#	inittape	- make a cold-install DECtape (see ../Readme)
 #	unix		- make the kernel
 #	clean		- delete intermediate files
 #	clobber		- delete all generated files
@@ -141,9 +142,31 @@ tape : protofs
 	@echo Building tape image...
 	@$(MKTAPE) root root/bin/* root/etc/*
 
-install : rf0.dsk rk0.dsk
+# build a separate "cold" kernel in cold/, leaving the normal one alone
+cold/unix : $(CLEANSRCS)
+	@echo Building cold kernel...
+	@rm -rf cold; mkdir cold
+	@for src in $(CLEANSRCS) ; do \
+		cp $$src cold/`basename $$src .clean`.s; \
+	done
+	@cd cold; for p in ../../patches/core/*.patch ../../patches/cold.patch ; do \
+		patch -s -p1 < $$p; \
+	done
+	@cd cold; APOUT_ROOT=$(CURDIR)/$(APOUT_ROOT) \
+		$(CURDIR)/../tools/apout/apout $(CURDIR)/$(APOUT_ROOT)/bin/as u?.s
+	@mv cold/a.out cold/unix
+
+# build the cold-install DECtape: boots straight into the cold kernel
+# and installs the root filesystem from the tape onto a blank RF disk
+inittape : rf0.dsk protofs cold/unix
+	@echo Building init tape...
+	@python3 ../tools/mkinittape.py --rf rf0.dsk --cold cold/unix \
+		--root root --maki ../fs/usr/sys/a.out --readme ../fs/Readme \
+		--all -o inittape
+
+install : rf0.dsk rk0.dsk inittape
 	@echo Installing...
-	@cp rf0.dsk rk0.dsk ../boot/m792low.load ../images
+	@cp rf0.dsk rk0.dsk inittape ../boot/m792low.load ../images
 	
 # clean intermediate files
 clean :
@@ -153,10 +176,11 @@ clean :
 	rm -rf usr root protofs
 	rm -f *.0405
 	rm -f images
+	rm -rf cold
 
 # clean intermediate and target files
 clobber : clean
-	rm -f tape
+	rm -f tape inittape
 	rm -f rf0.dsk rk0.dsk
 
 

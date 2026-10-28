@@ -1,3 +1,5 @@
 build/
 images/
 .envrc
+tools/mkfs
+tools/apout/apout
