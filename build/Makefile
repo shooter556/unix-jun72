@@ -5,7 +5,7 @@
 #	all		- make kernel and disk images
 #	images		- make disk images
 #	tape		- make a tape image for a "cold" kernel
-#	inittape	- make a cold-install DECtape (see ../Readme)
+#	inittape	- make a cold-install DECtape (see ../README.md)
 #	unix		- make the kernel
 #	clean		- delete intermediate files
 #	clobber		- delete all generated files
